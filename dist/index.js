@@ -25691,6 +25691,7 @@ async function run() {
         const userId = core.getInput('user-id') || '';
         const userAttrsRaw = core.getInput('user-attributes') || '{}';
         const fallback = core.getInput('fallback') || 'false';
+        const onDisabled = parseOnDisabled(core.getInput('on-disabled'));
         let userAttributes;
         try {
             userAttributes = JSON.parse(userAttrsRaw);
@@ -25717,30 +25718,50 @@ async function run() {
         }
         catch (err) {
             core.warning(`Flagify API unreachable (${err.message}). Using fallback "${fallback}".`);
-            emitResult(fallback, 'error');
+            emitResult(fallback, 'error', onDisabled);
             return;
         }
         if (!res.ok) {
             const body = await res.text().catch(() => '');
             core.warning(`Flagify API returned ${res.status}. Using fallback "${fallback}". Body: ${body.slice(0, 200)}`);
-            emitResult(fallback, 'error');
+            emitResult(fallback, 'error', onDisabled);
             return;
         }
         const data = (await res.json());
         const value = data.value === null || data.value === undefined ? fallback : String(data.value);
-        emitResult(value, data.reason || 'ok');
+        emitResult(value, data.reason || 'ok', onDisabled);
     }
     catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         core.setFailed(`flagify-action failed: ${message}`);
     }
 }
-function emitResult(value, reason) {
+function parseOnDisabled(raw) {
+    const v = (raw || 'continue').trim().toLowerCase();
+    if (v === 'continue' || v === 'fail' || v === 'skip')
+        return v;
+    core.warning(`Invalid on-disabled="${raw}". Falling back to "continue".`);
+    return 'continue';
+}
+function emitResult(value, reason, onDisabled = 'continue') {
     const enabled = isTruthy(value) ? 'true' : 'false';
     core.setOutput('value', value);
     core.setOutput('enabled', enabled);
     core.setOutput('reason', reason);
     core.info(`flag resolved → value=${value} enabled=${enabled} reason=${reason}`);
+    if (enabled === 'true')
+        return;
+    switch (onDisabled) {
+        case 'fail':
+            core.setFailed(`Flag is disabled (value="${value}", reason="${reason}"). on-disabled=fail.`);
+            return;
+        case 'skip':
+            core.notice(`Flag is disabled — on-disabled=skip. Downstream steps should gate on outputs.enabled.`);
+            return;
+        case 'continue':
+        default:
+            return;
+    }
 }
 function isTruthy(value) {
     const v = value.trim().toLowerCase();
