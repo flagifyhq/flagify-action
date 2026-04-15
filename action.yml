@@ -1,0 +1,43 @@
+name: Flagify
+description: Evaluate a Flagify feature flag in your GitHub Actions workflow.
+author: Flagify
+
+branding:
+  icon: flag
+  color: blue
+
+inputs:
+  api-key:
+    description: Your Flagify public key (pk_*). Store it as a repo secret.
+    required: true
+  api-url:
+    description: Flagify API base URL.
+    required: false
+    default: https://api.flagify.app
+  flag:
+    description: The flag key to evaluate (kebab-case).
+    required: true
+  user-id:
+    description: Optional user id for targeting rules.
+    required: false
+    default: ''
+  user-attributes:
+    description: Optional JSON object with user attributes for targeting (e.g. '{"role":"admin"}').
+    required: false
+    default: '{}'
+  fallback:
+    description: Value returned when the flag cannot be evaluated.
+    required: false
+    default: 'false'
+
+outputs:
+  value:
+    description: The evaluated flag value as a string.
+  enabled:
+    description: '"true" if the value is truthy, "false" otherwise.'
+  reason:
+    description: Why the flag resolved this way (targeting, fallthrough, error, etc.).
+
+runs:
+  using: node20
+  main: dist/index.js

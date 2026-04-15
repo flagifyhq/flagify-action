@@ -1,0 +1,8 @@
+node_modules/
+*.log
+.DS_Store
+.env
+.env.local
+
+# dist/ is committed — GitHub Actions runs the bundled output directly.
+# Do NOT add dist/ to .gitignore.
