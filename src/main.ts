@@ -9,11 +9,12 @@ interface EvaluateResponse {
 async function run(): Promise<void> {
   try {
     const apiKey = core.getInput('api-key', { required: true })
-    const apiUrl = (core.getInput('api-url') || 'https://api.flagify.app').replace(/\/$/, '')
+    const apiUrl = (core.getInput('api-url') || 'https://api.flagify.dev').replace(/\/$/, '')
     const flag = core.getInput('flag', { required: true })
     const userId = core.getInput('user-id') || ''
     const userAttrsRaw = core.getInput('user-attributes') || '{}'
     const fallback = core.getInput('fallback') || 'false'
+    const onDisabled = parseOnDisabled(core.getInput('on-disabled'))
 
     let userAttributes: Record<string, unknown>
     try {
@@ -43,7 +44,7 @@ async function run(): Promise<void> {
       core.warning(
         `Flagify API unreachable (${(err as Error).message}). Using fallback "${fallback}".`
       )
-      emitResult(fallback, 'error')
+      emitResult(fallback, 'error', onDisabled)
       return
     }
 
@@ -52,25 +53,48 @@ async function run(): Promise<void> {
       core.warning(
         `Flagify API returned ${res.status}. Using fallback "${fallback}". Body: ${body.slice(0, 200)}`
       )
-      emitResult(fallback, 'error')
+      emitResult(fallback, 'error', onDisabled)
       return
     }
 
     const data = (await res.json()) as EvaluateResponse
     const value = data.value === null || data.value === undefined ? fallback : String(data.value)
-    emitResult(value, data.reason || 'ok')
+    emitResult(value, data.reason || 'ok', onDisabled)
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     core.setFailed(`flagify-action failed: ${message}`)
   }
 }
 
-function emitResult(value: string, reason: string): void {
+type OnDisabled = 'continue' | 'fail' | 'skip'
+
+function parseOnDisabled(raw: string): OnDisabled {
+  const v = (raw || 'continue').trim().toLowerCase()
+  if (v === 'continue' || v === 'fail' || v === 'skip') return v
+  core.warning(`Invalid on-disabled="${raw}". Falling back to "continue".`)
+  return 'continue'
+}
+
+function emitResult(value: string, reason: string, onDisabled: OnDisabled = 'continue'): void {
   const enabled = isTruthy(value) ? 'true' : 'false'
   core.setOutput('value', value)
   core.setOutput('enabled', enabled)
   core.setOutput('reason', reason)
   core.info(`flag resolved → value=${value} enabled=${enabled} reason=${reason}`)
+
+  if (enabled === 'true') return
+
+  switch (onDisabled) {
+    case 'fail':
+      core.setFailed(`Flag is disabled (value="${value}", reason="${reason}"). on-disabled=fail.`)
+      return
+    case 'skip':
+      core.notice(`Flag is disabled — on-disabled=skip. Downstream steps should gate on outputs.enabled.`)
+      return
+    case 'continue':
+    default:
+      return
+  }
 }
 
 function isTruthy(value: string): boolean {

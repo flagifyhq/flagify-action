@@ -22,11 +22,12 @@ Evaluate a [Flagify](https://flagify.dev) feature flag in a GitHub Actions workf
 | Input | Required | Default | Description |
 |---|---|---|---|
 | `api-key` | yes | — | Your Flagify public key (`pk_*`). Store it as a repo secret. |
-| `api-url` | no | `https://api.flagify.app` | API base URL. Override for self-hosted. |
+| `api-url` | no | `https://api.flagify.dev` | API base URL. Override for self-hosted. |
 | `flag` | yes | — | The flag key to evaluate (kebab-case). |
 | `user-id` | no | `""` | Optional user id for targeting rules. |
 | `user-attributes` | no | `{}` | JSON object with user attributes for targeting. |
 | `fallback` | no | `"false"` | Value returned when the flag cannot be evaluated. |
+| `on-disabled` | no | `continue` | What to do when the flag is disabled. `continue` (emit outputs, proceed), `fail` (mark the step as failed — dependent jobs skip), `skip` (log + continue, downstream should gate on `outputs.enabled`). |
 
 ## Outputs
 
@@ -76,6 +77,22 @@ jobs:
 - name: Canary suite
   if: steps.canary.outputs.enabled == 'true'
   run: npm run test:canary
+```
+
+### Fail the job when a flag is off (kill-switch)
+
+Use `on-disabled: fail` to mark the step as failed when the flag resolves to a falsy value. Dependent jobs that use `needs:` skip automatically.
+
+```yaml
+- name: Require production deploys enabled
+  uses: flagifyhq/flagify-action@v1
+  with:
+    api-key: ${{ secrets.FLAGIFY_API_KEY }}
+    flag: production-deploys-enabled
+    on-disabled: fail
+
+- name: Deploy
+  run: ./deploy.sh
 ```
 
 ### Target by user attributes

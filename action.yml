@@ -13,7 +13,7 @@ inputs:
   api-url:
     description: Flagify API base URL.
     required: false
-    default: https://api.flagify.app
+    default: https://api.flagify.dev
   flag:
     description: The flag key to evaluate (kebab-case).
     required: true
@@ -29,6 +29,15 @@ inputs:
     description: Value returned when the flag cannot be evaluated.
     required: false
     default: 'false'
+  on-disabled:
+    description: >-
+      What to do when the flag resolves to a disabled (falsy) value.
+      "continue" (default) emits outputs and returns normally — use `if:` on
+      later steps. "fail" marks the step as failed so dependent jobs skip.
+      "skip" exits the step cleanly but signals downstream to skip via
+      outputs only (no failure).
+    required: false
+    default: continue
 
 outputs:
   value:
