@@ -1,4 +1,4 @@
-name: Flagify
+name: Flagify Feature Flags
 description: Evaluate a Flagify feature flag in your GitHub Actions workflow.
 author: Flagify
 
