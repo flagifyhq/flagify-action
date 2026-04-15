@@ -29,14 +29,23 @@ async function run(): Promise<void> {
     const url = `${apiUrl}/v1/eval/flags/${encodeURIComponent(flag)}/evaluate`
     core.debug(`POST ${url}`)
 
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': apiKey
-      },
-      body: JSON.stringify({ userId, attributes: userAttributes })
-    })
+    let res: Response
+    try {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': apiKey
+        },
+        body: JSON.stringify({ userId, attributes: userAttributes })
+      })
+    } catch (err) {
+      core.warning(
+        `Flagify API unreachable (${(err as Error).message}). Using fallback "${fallback}".`
+      )
+      emitResult(fallback, 'error')
+      return
+    }
 
     if (!res.ok) {
       const body = await res.text().catch(() => '')
