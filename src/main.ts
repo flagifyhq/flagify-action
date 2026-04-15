@@ -9,7 +9,7 @@ interface EvaluateResponse {
 async function run(): Promise<void> {
   try {
     const apiKey = core.getInput('api-key', { required: true })
-    const apiUrl = (core.getInput('api-url') || 'https://api.flagify.app').replace(/\/$/, '')
+    const apiUrl = (core.getInput('api-url') || 'https://api.flagify.dev').replace(/\/$/, '')
     const flag = core.getInput('flag', { required: true })
     const userId = core.getInput('user-id') || ''
     const userAttrsRaw = core.getInput('user-attributes') || '{}'

@@ -13,7 +13,7 @@ inputs:
   api-url:
     description: Flagify API base URL.
     required: false
-    default: https://api.flagify.app
+    default: https://api.flagify.dev
   flag:
     description: The flag key to evaluate (kebab-case).
     required: true

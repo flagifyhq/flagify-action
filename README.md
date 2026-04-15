@@ -22,7 +22,7 @@ Evaluate a [Flagify](https://flagify.dev) feature flag in a GitHub Actions workf
 | Input | Required | Default | Description |
 |---|---|---|---|
 | `api-key` | yes | — | Your Flagify public key (`pk_*`). Store it as a repo secret. |
-| `api-url` | no | `https://api.flagify.app` | API base URL. Override for self-hosted. |
+| `api-url` | no | `https://api.flagify.dev` | API base URL. Override for self-hosted. |
 | `flag` | yes | — | The flag key to evaluate (kebab-case). |
 | `user-id` | no | `""` | Optional user id for targeting rules. |
 | `user-attributes` | no | `{}` | JSON object with user attributes for targeting. |
