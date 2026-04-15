@@ -5,7 +5,12 @@ All notable changes to this action are documented here. Tags follow
 tag (`v1`) to the latest release in that line automatically, so
 `uses: flagifyhq/flagify-action@v1` always points at a stable release.
 
-## [1.0.0] — unreleased
+## [1.0.1] — unreleased
+
+### Changed
+- Renamed the action to `Flagify Feature Flags` so it can be published to the GitHub Marketplace (the previous name collided with an existing listing). No runtime change; `uses: flagifyhq/flagify-action@v1` continues to resolve.
+
+## [1.0.0]
 
 First stable release. Combines the initial evaluation capability with
 the `on-disabled` control input.
