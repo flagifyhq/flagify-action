@@ -5,9 +5,9 @@
   "description": "Evaluate a Flagify feature flag in a GitHub Actions workflow.",
   "main": "dist/index.js",
   "scripts": {
-    "build": "ncc build src/main.ts -o dist --source-map --license licenses.txt",
+    "build": "ncc build src/index.ts -o dist --source-map --license licenses.txt",
     "lint": "tsc --noEmit",
-    "test": "node --test src/**/*.test.ts"
+    "test": "node --import tsx --test 'src/**/*.test.ts'"
   },
   "dependencies": {
     "@actions/core": "^1.11.1"
@@ -15,6 +15,7 @@
   "devDependencies": {
     "@types/node": "^20.14.0",
     "@vercel/ncc": "^0.38.1",
+    "tsx": "^4.19.2",
     "typescript": "^5.4.5"
   },
   "engines": {

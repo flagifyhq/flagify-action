@@ -110,11 +110,12 @@ Use `on-disabled: fail` to mark the step as failed when the flag resolves to a f
 
 ```bash
 pnpm install
-pnpm run build   # bundles src/main.ts → dist/index.js (committed)
+pnpm test         # node --test with tsx loader (14 unit + integration tests)
 pnpm run lint
+pnpm run build    # bundles src/index.ts → dist/index.js (committed)
 ```
 
-`dist/` is committed to the repo — GitHub Actions runs the bundled output directly without installing dependencies.
+`dist/` is committed to the repo — GitHub Actions runs the bundled output directly without installing dependencies. CI fails if `dist/` is stale.
 
 ## License
 

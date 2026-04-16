@@ -25682,7 +25682,42 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.parseOnDisabled = parseOnDisabled;
+exports.isTruthy = isTruthy;
+exports.emitResult = emitResult;
+exports.run = run;
 const core = __importStar(__nccwpck_require__(6966));
+function parseOnDisabled(raw) {
+    const v = (raw || 'continue').trim().toLowerCase();
+    if (v === 'continue' || v === 'fail' || v === 'skip')
+        return v;
+    core.warning(`Invalid on-disabled="${raw}". Falling back to "continue".`);
+    return 'continue';
+}
+function isTruthy(value) {
+    const v = value.trim().toLowerCase();
+    return v === 'true' || v === '1' || v === 'yes' || v === 'on';
+}
+function emitResult(value, reason, onDisabled = 'continue') {
+    const enabled = isTruthy(value) ? 'true' : 'false';
+    core.setOutput('value', value);
+    core.setOutput('enabled', enabled);
+    core.setOutput('reason', reason);
+    core.info(`flag resolved → value=${value} enabled=${enabled} reason=${reason}`);
+    if (enabled === 'true')
+        return;
+    switch (onDisabled) {
+        case 'fail':
+            core.setFailed(`Flag is disabled (value="${value}", reason="${reason}"). on-disabled=fail.`);
+            return;
+        case 'skip':
+            core.notice(`Flag is disabled — on-disabled=skip. Downstream steps should gate on outputs.enabled.`);
+            return;
+        case 'continue':
+        default:
+            return;
+    }
+}
 async function run() {
     try {
         const apiKey = core.getInput('api-key', { required: true });
@@ -25736,38 +25771,6 @@ async function run() {
         core.setFailed(`flagify-action failed: ${message}`);
     }
 }
-function parseOnDisabled(raw) {
-    const v = (raw || 'continue').trim().toLowerCase();
-    if (v === 'continue' || v === 'fail' || v === 'skip')
-        return v;
-    core.warning(`Invalid on-disabled="${raw}". Falling back to "continue".`);
-    return 'continue';
-}
-function emitResult(value, reason, onDisabled = 'continue') {
-    const enabled = isTruthy(value) ? 'true' : 'false';
-    core.setOutput('value', value);
-    core.setOutput('enabled', enabled);
-    core.setOutput('reason', reason);
-    core.info(`flag resolved → value=${value} enabled=${enabled} reason=${reason}`);
-    if (enabled === 'true')
-        return;
-    switch (onDisabled) {
-        case 'fail':
-            core.setFailed(`Flag is disabled (value="${value}", reason="${reason}"). on-disabled=fail.`);
-            return;
-        case 'skip':
-            core.notice(`Flag is disabled — on-disabled=skip. Downstream steps should gate on outputs.enabled.`);
-            return;
-        case 'continue':
-        default:
-            return;
-    }
-}
-function isTruthy(value) {
-    const v = value.trim().toLowerCase();
-    return v === 'true' || v === '1' || v === 'yes' || v === 'on';
-}
-run();
 
 
 /***/ }),
@@ -27683,13 +27686,19 @@ module.exports = parseParams
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
 /******/ 	
 /************************************************************************/
-/******/ 	
-/******/ 	// startup
-/******/ 	// Load entry module and return exports
-/******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(7353);
-/******/ 	module.exports = __webpack_exports__;
-/******/ 	
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be in strict mode.
+(() => {
+"use strict";
+var exports = __webpack_exports__;
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const main_js_1 = __nccwpck_require__(7353);
+(0, main_js_1.run)();
+
+})();
+
+module.exports = __webpack_exports__;
 /******/ })()
 ;
 //# sourceMappingURL=index.js.map
