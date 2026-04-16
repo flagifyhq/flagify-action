@@ -1,12 +1,48 @@
 import * as core from '@actions/core'
 
-interface EvaluateResponse {
+export interface EvaluateResponse {
   key: string
   value: unknown
   reason: string
 }
 
-async function run(): Promise<void> {
+export type OnDisabled = 'continue' | 'fail' | 'skip'
+
+export function parseOnDisabled(raw: string): OnDisabled {
+  const v = (raw || 'continue').trim().toLowerCase()
+  if (v === 'continue' || v === 'fail' || v === 'skip') return v
+  core.warning(`Invalid on-disabled="${raw}". Falling back to "continue".`)
+  return 'continue'
+}
+
+export function isTruthy(value: string): boolean {
+  const v = value.trim().toLowerCase()
+  return v === 'true' || v === '1' || v === 'yes' || v === 'on'
+}
+
+export function emitResult(value: string, reason: string, onDisabled: OnDisabled = 'continue'): void {
+  const enabled = isTruthy(value) ? 'true' : 'false'
+  core.setOutput('value', value)
+  core.setOutput('enabled', enabled)
+  core.setOutput('reason', reason)
+  core.info(`flag resolved → value=${value} enabled=${enabled} reason=${reason}`)
+
+  if (enabled === 'true') return
+
+  switch (onDisabled) {
+    case 'fail':
+      core.setFailed(`Flag is disabled (value="${value}", reason="${reason}"). on-disabled=fail.`)
+      return
+    case 'skip':
+      core.notice(`Flag is disabled — on-disabled=skip. Downstream steps should gate on outputs.enabled.`)
+      return
+    case 'continue':
+    default:
+      return
+  }
+}
+
+export async function run(): Promise<void> {
   try {
     const apiKey = core.getInput('api-key', { required: true })
     const apiUrl = (core.getInput('api-url') || 'https://api.flagify.dev').replace(/\/$/, '')
@@ -65,41 +101,3 @@ async function run(): Promise<void> {
     core.setFailed(`flagify-action failed: ${message}`)
   }
 }
-
-type OnDisabled = 'continue' | 'fail' | 'skip'
-
-function parseOnDisabled(raw: string): OnDisabled {
-  const v = (raw || 'continue').trim().toLowerCase()
-  if (v === 'continue' || v === 'fail' || v === 'skip') return v
-  core.warning(`Invalid on-disabled="${raw}". Falling back to "continue".`)
-  return 'continue'
-}
-
-function emitResult(value: string, reason: string, onDisabled: OnDisabled = 'continue'): void {
-  const enabled = isTruthy(value) ? 'true' : 'false'
-  core.setOutput('value', value)
-  core.setOutput('enabled', enabled)
-  core.setOutput('reason', reason)
-  core.info(`flag resolved → value=${value} enabled=${enabled} reason=${reason}`)
-
-  if (enabled === 'true') return
-
-  switch (onDisabled) {
-    case 'fail':
-      core.setFailed(`Flag is disabled (value="${value}", reason="${reason}"). on-disabled=fail.`)
-      return
-    case 'skip':
-      core.notice(`Flag is disabled — on-disabled=skip. Downstream steps should gate on outputs.enabled.`)
-      return
-    case 'continue':
-    default:
-      return
-  }
-}
-
-function isTruthy(value: string): boolean {
-  const v = value.trim().toLowerCase()
-  return v === 'true' || v === '1' || v === 'yes' || v === 'on'
-}
-
-run()

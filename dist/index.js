@@ -25643,7 +25643,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 7353:
+/***/ 6866:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -25683,6 +25683,90 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(6966));
+const main_js_1 = __nccwpck_require__(7353);
+(0, main_js_1.run)().catch((err) => {
+    const message = err instanceof Error ? err.message : String(err);
+    core.setFailed(`flagify-action crashed: ${message}`);
+});
+
+
+/***/ }),
+
+/***/ 7353:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.parseOnDisabled = parseOnDisabled;
+exports.isTruthy = isTruthy;
+exports.emitResult = emitResult;
+exports.run = run;
+const core = __importStar(__nccwpck_require__(6966));
+function parseOnDisabled(raw) {
+    const v = (raw || 'continue').trim().toLowerCase();
+    if (v === 'continue' || v === 'fail' || v === 'skip')
+        return v;
+    core.warning(`Invalid on-disabled="${raw}". Falling back to "continue".`);
+    return 'continue';
+}
+function isTruthy(value) {
+    const v = value.trim().toLowerCase();
+    return v === 'true' || v === '1' || v === 'yes' || v === 'on';
+}
+function emitResult(value, reason, onDisabled = 'continue') {
+    const enabled = isTruthy(value) ? 'true' : 'false';
+    core.setOutput('value', value);
+    core.setOutput('enabled', enabled);
+    core.setOutput('reason', reason);
+    core.info(`flag resolved → value=${value} enabled=${enabled} reason=${reason}`);
+    if (enabled === 'true')
+        return;
+    switch (onDisabled) {
+        case 'fail':
+            core.setFailed(`Flag is disabled (value="${value}", reason="${reason}"). on-disabled=fail.`);
+            return;
+        case 'skip':
+            core.notice(`Flag is disabled — on-disabled=skip. Downstream steps should gate on outputs.enabled.`);
+            return;
+        case 'continue':
+        default:
+            return;
+    }
+}
 async function run() {
     try {
         const apiKey = core.getInput('api-key', { required: true });
@@ -25736,38 +25820,6 @@ async function run() {
         core.setFailed(`flagify-action failed: ${message}`);
     }
 }
-function parseOnDisabled(raw) {
-    const v = (raw || 'continue').trim().toLowerCase();
-    if (v === 'continue' || v === 'fail' || v === 'skip')
-        return v;
-    core.warning(`Invalid on-disabled="${raw}". Falling back to "continue".`);
-    return 'continue';
-}
-function emitResult(value, reason, onDisabled = 'continue') {
-    const enabled = isTruthy(value) ? 'true' : 'false';
-    core.setOutput('value', value);
-    core.setOutput('enabled', enabled);
-    core.setOutput('reason', reason);
-    core.info(`flag resolved → value=${value} enabled=${enabled} reason=${reason}`);
-    if (enabled === 'true')
-        return;
-    switch (onDisabled) {
-        case 'fail':
-            core.setFailed(`Flag is disabled (value="${value}", reason="${reason}"). on-disabled=fail.`);
-            return;
-        case 'skip':
-            core.notice(`Flag is disabled — on-disabled=skip. Downstream steps should gate on outputs.enabled.`);
-            return;
-        case 'continue':
-        default:
-            return;
-    }
-}
-function isTruthy(value) {
-    const v = value.trim().toLowerCase();
-    return v === 'true' || v === '1' || v === 'yes' || v === 'on';
-}
-run();
 
 
 /***/ }),
@@ -27687,7 +27739,7 @@ module.exports = parseParams
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(7353);
+/******/ 	var __webpack_exports__ = __nccwpck_require__(6866);
 /******/ 	module.exports = __webpack_exports__;
 /******/ 	
 /******/ })()

@@ -25,6 +25,8 @@ jobs:
 
       - run: pnpm run lint
 
+      - run: pnpm test
+
       - run: pnpm run build
 
       - name: Ensure dist/ is up to date
