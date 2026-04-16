@@ -7,7 +7,7 @@
   "scripts": {
     "build": "ncc build src/index.ts -o dist --source-map --license licenses.txt",
     "lint": "tsc --noEmit",
-    "test": "node --import tsx --test 'src/**/*.test.ts'"
+    "test": "node --import tsx --test src/main.test.ts"
   },
   "dependencies": {
     "@actions/core": "^1.11.1"

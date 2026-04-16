@@ -1,4 +1,4 @@
-import { describe, it, before, after, beforeEach } from 'node:test'
+import { describe, it, before, after, beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { createServer, type Server, type IncomingMessage, type ServerResponse } from 'node:http'
 import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs'
@@ -79,21 +79,44 @@ after(async () => {
   await new Promise<void>(resolve => server.close(() => resolve()))
 })
 
-// Each integration test uses a fresh GITHUB_OUTPUT temp file and clean env.
+// Each integration test uses a fresh GITHUB_OUTPUT temp file and a
+// snapshot/restore of process.env so a failing assertion cannot leak
+// INPUT_* state into the next test.
 let tmpDir: string
 let outputFile: string
+let envSnapshot: NodeJS.ProcessEnv
+let exitCodeSnapshot: number | string | undefined
 
 beforeEach(() => {
+  envSnapshot = { ...process.env }
+  exitCodeSnapshot = process.exitCode
+
   tmpDir = mkdtempSync(join(tmpdir(), 'flagify-action-test-'))
   outputFile = join(tmpDir, 'output')
   writeFileSync(outputFile, '')
   process.env.GITHUB_OUTPUT = outputFile
   process.exitCode = 0
 
-  // Reset inputs between tests.
+  // Reset any INPUT_* vars the ambient CI may have set.
   for (const k of Object.keys(process.env)) {
     if (k.startsWith('INPUT_')) delete process.env[k]
   }
+})
+
+afterEach(() => {
+  try {
+    rmSync(tmpDir, { recursive: true, force: true })
+  } catch {
+    /* ignore */
+  }
+  // Restore the full env so no INPUT_* or GITHUB_OUTPUT leaks between tests.
+  for (const k of Object.keys(process.env)) {
+    if (!(k in envSnapshot)) delete process.env[k]
+  }
+  for (const [k, v] of Object.entries(envSnapshot)) {
+    process.env[k] = v
+  }
+  process.exitCode = exitCodeSnapshot
 })
 
 function readOutputs(): Record<string, string> {
@@ -103,14 +126,6 @@ function readOutputs(): Record<string, string> {
   const matches = raw.matchAll(/^([a-zA-Z0-9-_]+)<<(\S+)\n([\s\S]*?)\n\2$/gm)
   for (const m of matches) out[m[1]] = m[3]
   return out
-}
-
-function cleanup() {
-  try {
-    rmSync(tmpDir, { recursive: true, force: true })
-  } catch {
-    /* ignore */
-  }
 }
 
 describe('run()', () => {
@@ -130,7 +145,6 @@ describe('run()', () => {
     assert.equal(out.enabled, 'true')
     assert.equal(out.reason, 'default')
     assert.equal(process.exitCode, 0)
-    cleanup()
   })
 
   it('HTTP 500: falls back and reports reason=error', async () => {
@@ -150,7 +164,6 @@ describe('run()', () => {
     assert.equal(out.enabled, 'false')
     assert.equal(out.reason, 'error')
     assert.equal(process.exitCode, 0, 'fallback on HTTP error does not fail the step')
-    cleanup()
   })
 
   it('network error: falls back and reports reason=error', async () => {
@@ -166,7 +179,6 @@ describe('run()', () => {
     assert.equal(out.enabled, 'true', 'truthy fallback stays enabled')
     assert.equal(out.reason, 'error')
     assert.equal(process.exitCode, 0)
-    cleanup()
   })
 
   it('on-disabled=fail + flag off: sets process.exitCode=1', async () => {
@@ -184,7 +196,6 @@ describe('run()', () => {
     const out = readOutputs()
     assert.equal(out.enabled, 'false')
     assert.equal(process.exitCode, 1, 'setFailed should set exit code to 1')
-    cleanup()
   })
 
   it('on-disabled=skip + flag off: step stays green', async () => {
@@ -202,7 +213,6 @@ describe('run()', () => {
     const out = readOutputs()
     assert.equal(out.enabled, 'false')
     assert.equal(process.exitCode, 0, 'skip mode never fails')
-    cleanup()
   })
 
   it('invalid user-attributes JSON: warns and uses {}', async () => {
@@ -225,6 +235,5 @@ describe('run()', () => {
 
     const body = JSON.parse(receivedBody)
     assert.deepEqual(body.attributes, {}, 'bad JSON should default to empty object')
-    cleanup()
   })
 })

@@ -1,3 +1,7 @@
+import * as core from '@actions/core'
 import { run } from './main.js'
 
-run()
+run().catch((err: unknown) => {
+  const message = err instanceof Error ? err.message : String(err)
+  core.setFailed(`flagify-action crashed: ${message}`)
+})
