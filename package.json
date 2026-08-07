@@ -10,7 +10,7 @@
     "test": "node --import tsx --test src/main.test.ts"
   },
   "dependencies": {
-    "@actions/core": "^1.11.1"
+    "@actions/core": "^2.0.3"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
